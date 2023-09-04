@@ -1,0 +1,60 @@
+service: askme
+
+plugins:
+    - serverless-bundle
+    - serverless-pseudo-parameters
+    - serverless-offline
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    memorySize: 256
+    stage: ${opt:stage, 'dev'}
+    region: us-east-2
+    timeout: 10
+    websocketsApiName: chat-websockets
+    websocketsApiRouteSelectionExpression: $request.body.action
+    websocketsDescription: Chat Serverless Websockets
+    apiGateway:
+        binaryMediaTypes:
+            - '*/*'
+
+functions:
+    user:
+        handler: src/handlers/user.handler
+        events:
+            - http: ANY /user
+            - http: ANY /user/{proxy+}
+    authentication:
+        handler: src/handlers/authentication.handler
+        events:
+            - http: ANY /auth
+            - http: ANY /auth/{proxy+}
+    question:
+        handler: src/handlers/question.handler
+        events:
+            - http: ANY /question
+            - http: ANY /question/{proxy+}
+    chat:
+        handler: src/handlers/chat.handler
+        events:
+            - http: ANY /chat
+            - http: ANY /chat/{proxy+}
+    connect:
+        handler: src/handlers/chat.connect
+        events:
+            - websocket:
+                  route: $connect
+                  cors : true
+    disconnect:
+        handler: src/handlers/chat.disconnect
+        events:
+            - websocket:
+                  route: $disconnect
+                  cors : true
+    onMessageHandler:
+        handler: src/handlers/chat.onMessageHandler
+        events:
+            - websocket:
+                  route: message
+                  cors : true
